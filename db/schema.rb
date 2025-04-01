@@ -10,11 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_01_151124) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_01_194250) do
   create_table "authors", force: :cascade do |t|
     t.string "author_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "book_genre_assignments", force: :cascade do |t|
+    t.integer "book_id", null: false
+    t.integer "book_genre_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["book_genre_id"], name: "index_book_genre_assignments_on_book_genre_id"
+    t.index ["book_id"], name: "index_book_genre_assignments_on_book_id"
   end
 
   create_table "book_genres", force: :cascade do |t|
@@ -64,15 +73,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_01_151124) do
 
   create_table "order_items", force: :cascade do |t|
     t.integer "quantity"
-    t.string "price_at_order"
-    t.string "decimal"
+    t.decimal "price_at_order"
     t.integer "order_id", null: false
     t.integer "book_id", null: false
-    t.integer "merchandise_id", null: false
+    t.integer "merch_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["book_id"], name: "index_order_items_on_book_id"
-    t.index ["merchandise_id"], name: "index_order_items_on_merchandise_id"
+    t.index ["merch_id"], name: "index_order_items_on_merch_id"
     t.index ["order_id"], name: "index_order_items_on_order_id"
   end
 
@@ -86,11 +94,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_01_151124) do
     t.index ["customer_id"], name: "index_orders_on_customer_id"
   end
 
+  add_foreign_key "book_genre_assignments", "book_genres"
+  add_foreign_key "book_genre_assignments", "books"
   add_foreign_key "books", "authors"
   add_foreign_key "books", "book_genres"
   add_foreign_key "merchandises", "merchandise_categories"
   add_foreign_key "order_items", "books"
-  add_foreign_key "order_items", "merchandises"
+  add_foreign_key "order_items", "merches"
   add_foreign_key "order_items", "orders"
   add_foreign_key "orders", "customers"
 end

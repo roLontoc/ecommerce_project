@@ -1,6 +1,22 @@
 require 'httparty'
 require 'uri'
 require 'faker'
+require "csv"
+
+OrderItem.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'order_items'")
+
+Order.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'orders'")
+
+Customer.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'customers'")
+
+MerchandiseCategory.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'merchandise_categories'")
+
+BookGenreAssignment.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'book_genre_assignments'")
 
 Book.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'books'")
@@ -56,7 +72,7 @@ def fetch_work_data(work_id)
 end
 
 # Seed Books, Authors, and Genres
-10.times do |i|
+5.times do |i|
   book_data = fetch_book_data(Faker::Book.title)
 
   if book_data
@@ -115,3 +131,114 @@ end
 end
 
 puts "Books, Authors, and Genres populated."
+
+puts "Creating Customers..."
+10.times do
+  Customer.create!(
+    first_name: Faker::Name.first_name,
+    last_name: Faker::Name.last_name,
+    email: Faker::Internet.email,
+    address: Faker::Address.full_address
+  )
+end
+puts "Customers created."
+
+merchandiseCategoryFile = Rails.root.join('db/merchandise_category.csv')
+
+merchandiseCategoryCSV = File.read(merchandiseCategoryFile)
+
+merchandiseCategories = CSV.parse(merchandiseCategoryCSV, headers: true)
+
+merchandiseCategories.each do |merchandiseCategory |
+  new_merchandiseCategory = MerchandiseCategory.create(
+    category_name: merchandiseCategory["merch_category"]
+  )
+end
+
+def generate_fake_merch(num_items = 5)
+  num_items.times do |i|
+    category = MerchandiseCategory.order('RANDOM()').first
+    category_id = category.id
+    category_name = category.category_name
+
+    merch_name = case category_name
+    when "Apparel"
+      "#{Faker::Adjective.positive} #{%w[Tshirt Sweatshirt Hat].sample}"
+    when "Reading Accessories"
+      "#{Faker::Adjective.positive} #{%w[Bookmark Book\ Sleeve Mug 'Tote\ Bag Book\ Light].sample}"
+    when "Home Décor"
+      "#{Faker::Adjective.positive} #{%w[Poster Candle 'Throw\ Pillow Wall\ Tapestry].sample}"
+    when "Stationary"
+      "#{Faker::Adjective.positive} #{%w[Notebook 'Pen\ Set Sticky\ Notes 'Washi\ Tape].sample}"
+    end
+    description = Faker::Lorem.sentence(word_count: 5) + " #{[ 'Perfect for book lovers.', 'Enhance your reading experience.', 'Add a touch of literary charm.', 'Perfect for writing down your thoughts.' ].sample}"
+
+    price = Faker::Commerce.price(range: 8.99..59.99)
+    stock_quantity = Faker::Number.between(from: 10, to: 150)
+
+    Merchandise.create!(
+      merch_name: merch_name,
+      description: description,
+      price: price,
+      stock_quantity: stock_quantity,
+      merchandise_category_id: category_id
+    )
+  end
+end
+
+generate_fake_merch(2)
+puts "Merchandise populated!"
+
+  # Create Orders
+  puts "Creating Orders..."
+  Customer.all.each do |customer|
+    order_date = Faker::Date.between(from: 1.year.ago, to: Date.today)
+    order_total = 0.0 # Initialize order_total
+    order_tax = 0.0   # Initialize sales_tax
+
+    order = Order.create!(
+      customer: customer,
+      order_date: order_date,
+      order_total: order_total, # Initially 0, will be updated
+      order_tax: order_tax     # Initially 0, will be updated
+    )
+
+    # Create Order Items for each order
+    rand(1..5).times do # Each order has 1 to 5 items
+      if rand(2) == 0 # 50% chance of being a book
+        book = Book.order('RANDOM()').first # Get a random book
+        quantity = rand(1..3)
+        price_at_order = book.price
+
+        OrderItem.create!(
+          order: order,
+          book_id: book.id,  # Use book_id
+          quantity: quantity,
+          price_at_order: price_at_order
+        )
+        order_total += quantity * price_at_order  # Update order_total
+      else # 50% chance of being merchandise
+        merch = Merchandise.order('RANDOM()').first # Get a random merch item
+        quantity = rand(1..3)
+        price_at_order = merch.price
+
+        OrderItem.create!(
+          order: order,
+          merchandise_id: merch.id, # Use merch_id
+          quantity: quantity,
+          price_at_order: price_at_order
+        )
+        order_total += quantity * price_at_order # Update order_total
+      end
+    end
+
+    order_tax = order_total * 0.12 # Calculate 12% sales tax
+    order_total += order_tax       # Add sales tax to the order total
+
+    order.update!(
+      order_total: order_total,
+      order_tax: order_tax
+    ) # Save the updated order_total and sales_tax
+    puts "Order Items created for Order #{order.id}."
+  end
+puts "Orders created."

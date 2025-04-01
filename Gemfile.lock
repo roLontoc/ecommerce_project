@@ -369,6 +369,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   capybara
+  csv
   debug
   faker
   httparty
