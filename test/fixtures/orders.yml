@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  order_date: 2025-04-01
+  order_tax: 9.99
+  order_total: 9.99
+  customer: one
+
+two:
+  order_date: 2025-04-01
+  order_tax: 9.99
+  order_total: 9.99
+  customer: two
