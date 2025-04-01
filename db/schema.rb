@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_01_150817) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_01_151124) do
   create_table "authors", force: :cascade do |t|
     t.string "author_name"
     t.datetime "created_at", null: false
@@ -62,6 +62,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_01_150817) do
     t.index ["merchandise_category_id"], name: "index_merchandises_on_merchandise_category_id"
   end
 
+  create_table "order_items", force: :cascade do |t|
+    t.integer "quantity"
+    t.string "price_at_order"
+    t.string "decimal"
+    t.integer "order_id", null: false
+    t.integer "book_id", null: false
+    t.integer "merchandise_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["book_id"], name: "index_order_items_on_book_id"
+    t.index ["merchandise_id"], name: "index_order_items_on_merchandise_id"
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+  end
+
   create_table "orders", force: :cascade do |t|
     t.date "order_date"
     t.decimal "order_tax"
@@ -75,5 +89,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_01_150817) do
   add_foreign_key "books", "authors"
   add_foreign_key "books", "book_genres"
   add_foreign_key "merchandises", "merchandise_categories"
+  add_foreign_key "order_items", "books"
+  add_foreign_key "order_items", "merchandises"
+  add_foreign_key "order_items", "orders"
   add_foreign_key "orders", "customers"
 end
