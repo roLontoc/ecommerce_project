@@ -12,6 +12,9 @@ ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 
 Customer.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'customers'")
 
+Merchandise.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'merchandises'")
+
 MerchandiseCategory.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'merchandise_categories'")
 
@@ -26,8 +29,6 @@ ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 
 
 Author.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'authors'")
-
-
 
 def search_author(query)
   encoded_query = URI.encode_www_form_component(query)
@@ -72,7 +73,7 @@ def fetch_work_data(work_id)
 end
 
 # Seed Books, Authors, and Genres
-5.times do |i|
+100.times do |i|
   book_data = fetch_book_data(Faker::Book.title)
 
   if book_data
@@ -80,7 +81,7 @@ end
     work_details = fetch_work_data(work_id)
 
     if work_details
-      # Find Author
+
       author_data = search_author(book_data['author_name']&.first || "Unknown Author")
 
       if author_data
@@ -90,7 +91,6 @@ end
         if author_details
           author = Author.find_or_create_by(author_name: author_details['name'])
 
-          # Create Genres (up to 5 subjects)
           genres = []
           if work_details['subjects'] && work_details['subjects'].any?
             work_details['subjects'].take(5).each do |subject|
@@ -133,7 +133,7 @@ end
 puts "Books, Authors, and Genres populated."
 
 puts "Creating Customers..."
-10.times do
+50.times do
   Customer.create!(
     first_name: Faker::Name.first_name,
     last_name: Faker::Name.last_name,
@@ -163,15 +163,15 @@ def generate_fake_merch(num_items = 5)
 
     merch_name = case category_name
     when "Apparel"
-      "#{Faker::Adjective.positive} #{%w[Tshirt Sweatshirt Hat].sample}"
+      "#{Faker::Adjective.positive.capitalize} #{%w[Tshirt Sweatshirt Hat].sample}"
     when "Reading Accessories"
-      "#{Faker::Adjective.positive} #{%w[Bookmark Book\ Sleeve Mug 'Tote\ Bag Book\ Light].sample}"
+      "#{Faker::Adjective.positive.capitalize} #{%w[Bookmark Book\ Sleeve Mug 'Tote\ Bag Book\ Light].sample}"
     when "Home Décor"
-      "#{Faker::Adjective.positive} #{%w[Poster Candle 'Throw\ Pillow Wall\ Tapestry].sample}"
+      "#{Faker::Adjective.positive.capitalize} #{%w[Poster Candle 'Throw\ Pillow Wall\ Tapestry].sample}"
     when "Stationary"
-      "#{Faker::Adjective.positive} #{%w[Notebook 'Pen\ Set Sticky\ Notes 'Washi\ Tape].sample}"
+      "#{Faker::Adjective.positive.capitalize} #{%w[Notebook 'Pen\ Set Sticky\ Notes 'Washi\ Tape].sample}"
     end
-    description = Faker::Lorem.sentence(word_count: 5) + " #{[ 'Perfect for book lovers.', 'Enhance your reading experience.', 'Add a touch of literary charm.', 'Perfect for writing down your thoughts.' ].sample}"
+    description = " #{[ 'Perfect for book lovers.', 'Enhance your reading experience.', 'Add a touch of literary charm.', 'Perfect for writing down your thoughts.' ].sample}"
 
     price = Faker::Commerce.price(range: 8.99..59.99)
     stock_quantity = Faker::Number.between(from: 10, to: 150)
@@ -186,21 +186,22 @@ def generate_fake_merch(num_items = 5)
   end
 end
 
-generate_fake_merch(2)
+generate_fake_merch(50)
 puts "Merchandise populated!"
 
   # Create Orders
   puts "Creating Orders..."
   Customer.all.each do |customer|
+    rand(1..3).times do
     order_date = Faker::Date.between(from: 1.year.ago, to: Date.today)
-    order_total = 0.0 # Initialize order_total
-    order_tax = 0.0   # Initialize sales_tax
+    order_total = 0.0
+    order_tax = 0.0
 
     order = Order.create!(
       customer: customer,
       order_date: order_date,
-      order_total: order_total, # Initially 0, will be updated
-      order_tax: order_tax     # Initially 0, will be updated
+      order_total: order_total,
+      order_tax: order_tax
     )
 
     # Create Order Items for each order
@@ -236,9 +237,10 @@ puts "Merchandise populated!"
     order_total += order_tax       # Add sales tax to the order total
 
     order.update!(
-      order_total: order_total,
-      order_tax: order_tax
-    ) # Save the updated order_total and sales_tax
+      order_total: order_total.round(2),
+      order_tax: order_tax.round(2)
+    )
     puts "Order Items created for Order #{order.id}."
   end
+end
 puts "Orders created."

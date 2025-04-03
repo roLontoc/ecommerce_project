@@ -75,12 +75,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_01_194250) do
     t.integer "quantity"
     t.decimal "price_at_order"
     t.integer "order_id", null: false
-    t.integer "book_id", null: false
-    t.integer "merch_id", null: false
+    t.integer "book_id"
+    t.integer "merchandise_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["book_id"], name: "index_order_items_on_book_id"
-    t.index ["merch_id"], name: "index_order_items_on_merch_id"
+    t.index ["merchandise_id"], name: "index_order_items_on_merchandise_id"
     t.index ["order_id"], name: "index_order_items_on_order_id"
   end
 
@@ -100,7 +100,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_01_194250) do
   add_foreign_key "books", "book_genres"
   add_foreign_key "merchandises", "merchandise_categories"
   add_foreign_key "order_items", "books"
-  add_foreign_key "order_items", "merches"
+  add_foreign_key "order_items", "merchandises"
   add_foreign_key "order_items", "orders"
   add_foreign_key "orders", "customers"
 end
