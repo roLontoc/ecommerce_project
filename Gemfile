@@ -28,6 +28,7 @@ gem "httparty"
 gem "faker"
 gem "uri"
 gem "csv"
+gem "sass-rails"
 
 # pagination
 gem "kaminari"
