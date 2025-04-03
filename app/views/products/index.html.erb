@@ -1,6 +1,24 @@
 <h1>All Products</h1>
 <p>Take a look at our vast collection of books and merch. There is something for every book lover.</p>
 
+<nav>
+  <ul>
+    <li><%= link_to "All Products", products_path %></li>
+    <li><%= link_to "Books", products_books_path %></li>
+    <li><%= link_to "Merchandise", products_merchandise_path %></li>
+  </ul>
+</nav>
+
+<h2>
+  <% if request.path == products_path %>
+    All Products
+  <% elsif request.path == products_books_path %>
+    Books
+  <% elsif request.path == products_merchandise_path %>
+    Merchandise
+  <% end %>
+</h2>
+
 <% @products.each do |product| %>
   <div>
     <% if product.is_a?(Book) %>

@@ -9,4 +9,4 @@
     <li><%= genre.genre_name %></li>
   <% end %>
 </ul>
- <%= link_to "Back to Products", products_path %>
+ <%= link_to "Back to Products", products_path(product_type: params[:product_type]) %>
