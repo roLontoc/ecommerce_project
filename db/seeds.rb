@@ -73,7 +73,7 @@ def fetch_work_data(work_id)
 end
 
 # Seed Books, Authors, and Genres
-100.times do |i|
+50.times do |i|
   book_data = fetch_book_data(Faker::Book.title)
 
   if book_data
@@ -133,7 +133,7 @@ end
 puts "Books, Authors, and Genres populated."
 
 puts "Creating Customers..."
-50.times do
+20.times do
   Customer.create!(
     first_name: Faker::Name.first_name,
     last_name: Faker::Name.last_name,

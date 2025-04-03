@@ -1,0 +1,6 @@
+<h1><%= @merchandise.merch_name %></h1>
+<p>Description: <%= @merchandise.description %></p>
+<p>Price: <%= number_to_currency(@merchandise.price) %></p>
+<p>Stock Quantity: <%= @merchandise.stock_quantity %></p>
+
+<%= link_to "Back to Products", products_path %>

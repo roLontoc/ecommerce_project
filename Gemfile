@@ -27,6 +27,7 @@ gem "httparty"
 gem "faker"
 gem "uri"
 gem "csv"
+gem "kaminari"
 
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
 gem "solid_cache"

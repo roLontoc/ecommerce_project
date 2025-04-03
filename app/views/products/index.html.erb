@@ -1,0 +1,18 @@
+<h1>All Products</h1>
+<p>Take a look at our vast collection of books and merch. There is something for every book lover.</p>
+
+<% @products.each do |product| %>
+  <div>
+    <% if product.is_a?(Book) %>
+      <h3><%= link_to product.title, book_path(product) %></h3>
+      <p>Price: <%= number_to_currency(product.price) %></p>
+    <% elsif product.is_a?(Merchandise) %>
+      <h3><%= link_to product.merch_name, merchandise_path(product) %></h3>
+      <p>Price: <%= number_to_currency(product.price) %></p>
+    <% end %>
+  </div>
+<% end %>
+
+<%= paginate @products %>
+
+
