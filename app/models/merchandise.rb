@@ -1,5 +1,7 @@
 class Merchandise < ApplicationRecord
   belongs_to :merchandise_category
+  has_one_attached :image
+
 
   def self.ransackable_associations(auth_object = nil)
     [ "merchandise_category" ]
