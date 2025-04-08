@@ -3,6 +3,8 @@ require 'uri'
 require 'faker'
 require "csv"
 
+AdminUser.where(email: 'admin@example.com').destroy_all if Rails.env.development?
+
 OrderItem.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'order_items'")
 

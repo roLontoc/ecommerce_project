@@ -1,0 +1,12 @@
+<% if merchandise.image.present? %>
+  <div class="card-image">
+    <figure class="image is-4by3">
+      <%= image_tag merchandise.image %>
+    </figure>
+  </div>
+<% end %>
+<h1><%= merchandise.merch_name %></h1>
+<p>Description: <%= merchandise.description %></p>
+<p>Price: <%= number_to_currency(merchandise.price) %></p>
+<p>Stock Quantity: <%= merchandise.stock_quantity %></p>
+<p>Author: <%= merchandise.merchandise_category.category_name %></p>
