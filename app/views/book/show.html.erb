@@ -1,12 +1,3 @@
-<h1><%= @book.title %></h1>
-<p>Description: <%= @book.description %></p>
-<p>Price: <%= number_to_currency(@book.price) %></p>
-<p>Stock Quantity: <%= @book.stock_quantity %></p>
-<p>Author: <%= @book.author.author_name %></p>
-<p>Genres:</p>
-<ul>
-  <% @book.book_genres.each do |genre| %>
-    <li><%= genre.genre_name %></li>
-  <% end %>
-</ul>
- <%= link_to "Back to Products", products_path(product_type: params[:product_type]) %>
+<%= render partial: 'book', locals: { book: @book } %>
+<%= render partial: 'book_genres', locals: { book: @book } %>
+<%= link_to "Back to Products", products_path(product_type: params[:product_type]) %>

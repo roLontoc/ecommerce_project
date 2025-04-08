@@ -1,0 +1,12 @@
+<% if book.image.present? %>
+  <div class="card-image">
+    <figure class="image is-4by3">
+      <%= image_tag book.image %>
+    </figure>
+  </div>
+<% end %>
+<h1><%= book.title %></h1>
+<p>Description: <%= book.description %></p>
+<p>Price: <%= number_to_currency(book.price) %></p>
+<p>Stock Quantity: <%= book.stock_quantity %></p>
+<p>Author: <%= book.author.author_name %></p>
