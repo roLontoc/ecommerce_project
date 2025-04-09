@@ -37,6 +37,9 @@ gem "kaminari"
 gem "activeadmin"
 gem "devise"
 
+gem "stripe"
+
+
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
 gem "solid_cache"
 gem "solid_queue"

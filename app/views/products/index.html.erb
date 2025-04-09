@@ -6,6 +6,26 @@
     <li><%= link_to "All Products", products_path %></li>
     <li><%= link_to "Books", products_books_path %></li>
     <li><%= link_to "Merchandise", products_merchandise_path %></li>
+
+    <% if controller_name == 'products' && action_name == 'books_only' %>
+      <li>
+        <strong>Filter by Author:</strong>
+        <ul>
+          <% Author.all.each do |author| %>
+            <li><%= link_to author.author_name, products_books_by_author_path(author_name: author.author_name) %></li>
+          <% end %>
+        </ul>
+      </li>
+    <% elsif controller_name == 'products' && action_name == 'merchandise_only' %>
+      <li>
+        <strong>Filter by Category:</strong>
+        <ul>
+          <% MerchandiseCategory.all.each do |merch| %>
+            <li><%= link_to merch.category_name, products_merchandise_by_category_path(merchandise_category_name: merch.category_name) %></li>
+          <% end %>
+        </ul>
+      </li>
+    <% end %>
   </ul>
 </nav>
 

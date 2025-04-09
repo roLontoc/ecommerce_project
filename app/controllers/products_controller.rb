@@ -13,4 +13,14 @@ class ProductsController < ApplicationController
     @products = Merchandise.all.page(params[:page]).per(10)
     render "index"
   end
+
+  def filter_books_by_author
+      @products = Book.joins(:author).where("authors.author_name = ?", params[:author_name]).page(params[:page]).per(10)
+      render "index"
+  end
+
+  def filter_merchandise_by_category
+      @products = Merchandise.joins(:merchandise_category).where("merchandise_categories.category_name = ?", params[:merchandise_category_name]).page(params[:page]).per(10)
+      render "index"
+  end
 end
