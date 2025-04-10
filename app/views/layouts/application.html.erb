@@ -20,6 +20,7 @@
   </head>
 
   <body>
+        <%= render "products/product_search_form" %>
     <nav>
     <ul>
       <li><%= link_to "Home", root_path %></li>
@@ -28,6 +29,12 @@
       <li><%= link_to "Contact Us", contact_path %></li>
     </ul>
   </nav>
+  <% if flash[:notice] %>
+  <div class="flash-notice">
+    <p><%= flash[:notice] %></p>
+  </div>
+<% end %>
+  <%= link_to "View Cart", show_cart_products_path %>
     <%= yield %>
   </body>
 </html>

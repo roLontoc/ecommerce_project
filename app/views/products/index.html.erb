@@ -1,3 +1,4 @@
+
 <h1>All Products</h1>
 <p>Take a look at our vast collection of books and merch. There is something for every book lover.</p>
 
@@ -38,19 +39,23 @@
     Merchandise
   <% end %>
 </h2>
-
+<% if @search_message %>
+  <p><%= @search_message %></p>
+<% end %>
 <% @products.each do |product| %>
   <div>
-    <% if product.is_a?(Book) %>
-      <h3><%= link_to product.title, book_path(product) %></h3>
-      <p>Price: <%= number_to_currency(product.price) %></p>
-    <% elsif product.is_a?(Merchandise) %>
-      <h3><%= link_to product.merch_name, merchandise_path(product) %></h3>
-      <p>Price: <%= number_to_currency(product.price) %></p>
+    <h3><%= product.respond_to?(:author) ? product.title : product.merch_name %></h3>
+    <p><%= product.respond_to?(:author) ? product.description : product.description %></p>
+    <p>Price: <%= number_to_currency(product.price) %></p>
+    <%= form_with url: add_to_cart_products_path, method: :post do |f| %>
+      <%= f.hidden_field :product_id, value: product.id %>
+      <%= f.hidden_field :product_type, value: product.class.name.downcase %>
+      <%= f.number_field :quantity, value: 1, min: 1 %>
+      <%= f.submit "Add to Cart", data: {turbo: false} %>
     <% end %>
   </div>
+  <hr>
 <% end %>
-
 <%= paginate @products %>
 
 
