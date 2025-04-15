@@ -18,7 +18,6 @@ class CheckoutController < ApplicationController
       redirect_to show_cart_path, alert: "Your cart is empty. Cannot proceed to checkout."
       return
     end
-
     session = Stripe::Checkout::Session.create(
       payment_method_types: [ "card" ],
       mode: "payment",

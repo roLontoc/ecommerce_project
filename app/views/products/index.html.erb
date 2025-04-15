@@ -44,7 +44,13 @@
 <% end %>
 <% @products.each do |product| %>
   <div>
-    <h3><%= product.respond_to?(:author) ? product.title : product.merch_name %></h3>
+    <h3>
+      <% if product.respond_to?(:author) %>
+        <%= link_to product.title, book_path(product) %>
+      <% else %>
+        <%= link_to product.merch_name, merchandise_path(product) %>
+      <% end %>
+    </h3>
     <p><%= product.respond_to?(:author) ? product.description : product.description %></p>
     <p>Price: <%= number_to_currency(product.price) %></p>
     <%= form_with url: add_to_cart_products_path, method: :post do |f| %>
@@ -57,5 +63,3 @@
   <hr>
 <% end %>
 <%= paginate @products %>
-
-
