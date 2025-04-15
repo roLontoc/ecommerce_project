@@ -1,1 +1,4 @@
 <h1>I just took your money. Thanks for your business!</h1>
+<p>Your order (Order #<%= @order.id %>) has been successfully placed.</p>
+<%= link_to "View Order Details", order_path(@order) if defined? order_path %>
+<%= link_to "Continue Shopping", products_path %>

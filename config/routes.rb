@@ -22,13 +22,15 @@ Rails.application.routes.draw do
     end
   end
   scope "/checkout" do
-    post "create", to: "checkout#create", as: "checkout_create"
-    post "success", to: "checkout#success", as: "checkout_success"
-    post "cancel", to: "checkout#cancel", as: "checkout_cancel"
+    get "checkout", to: "checkout#checkout", as: "checkout_path"
+    post "create", to: "checkout#create", as: "checkout_create_path"
+    get "success", to: "checkout#success", as: "checkout_success_path"
+    get "cancel", to: "checkout#cancel", as: "checkout_cancel+path"
   end
 
   get "up" => "rails/health#show", as: :rails_health_check
 
+  resources :orders, only: [ :show ]
   resources :book
   resources :merchandise
   resources :authors

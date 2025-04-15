@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_15_152544) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_15_160450) do
   create_table "about_pages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -57,6 +57,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_15_152544) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.string "street"
+    t.string "city"
+    t.integer "province_id", null: false
+    t.string "postal_code"
+    t.integer "customer_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_addresses_on_customer_id"
+    t.index ["province_id"], name: "index_addresses_on_province_id"
   end
 
   create_table "admin_users", force: :cascade do |t|
@@ -115,7 +127,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_15_152544) do
     t.string "first_name"
     t.string "last_name"
     t.string "email"
-    t.string "address"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "encrypted_password", default: "", null: false
@@ -165,7 +176,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_15_152544) do
     t.integer "customer_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "order_number"
     t.index ["customer_id"], name: "index_orders_on_customer_id"
+    t.index ["order_number"], name: "index_orders_on_order_number", unique: true
   end
 
   create_table "provinces", force: :cascade do |t|
@@ -179,6 +192,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_15_152544) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "addresses", "customers"
+  add_foreign_key "addresses", "provinces"
   add_foreign_key "book_genre_assignments", "book_genres"
   add_foreign_key "book_genre_assignments", "books"
   add_foreign_key "books", "authors"
