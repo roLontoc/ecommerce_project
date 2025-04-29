@@ -18,15 +18,14 @@
     <link rel="apple-touch-icon" href="/icon.png">
 
   </head>
-
-  <% if customer_signed_in? %>
+  <body>
+     <% if customer_signed_in? %>
   <%= link_to 'Logout', destroy_customer_session_path, method: :delete %>
   <%= link_to 'Order History', order_history_customer_path %>
 <% else %>
   <%= link_to 'Login', new_customer_session_path %> |
   <%= link_to 'Sign Up', new_customer_registration_path %>
 <% end %>
-  <body>
     <%= javascript_include_tag 'application' %>
 
         <%= render "products/product_search_form" %>

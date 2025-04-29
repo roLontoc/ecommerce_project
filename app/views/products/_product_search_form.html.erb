@@ -1,7 +1,7 @@
 <div class="search-bar">
  <%= form_with url: search_products_path, method: :get do |f| %>
   <%= f.text_field :keyword %>
-  <%= select_tag :categories, options_for_select([["All Categories", ["Books", "Merchandise"]], "Books", "Merchandise"], params[:categories]), include_hidden: false %>
+  <%= select_tag :categories, options_for_select([["All Categories", ["Books", "Merchandise"]], "Books", "Merchandise"], params[:categories]) %>
   <%= f.submit "Search" %>
 <% end %>
 </div>
