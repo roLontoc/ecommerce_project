@@ -1,0 +1,40 @@
+<h1>Order #<%= @order.order_number %></h1>
+
+<p><strong>Order Date:</strong> <%= @order.order_date %></p>
+<p><strong>Status:</strong> <%= @order.status.capitalize %></p>
+<p><strong>Total:</strong> <%= number_to_currency(@order.order_total) %></p>
+<p><strong>Tax:</strong> <%= number_to_currency(@order.order_tax) %></p>
+
+<h2>Order Items</h2>
+<% if @order_items.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price at Order</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @order_items.each do |item| %>
+        <tr>
+          <td>
+            <% if item.book.present? %>
+              <%= item.book.title %>
+            <% elsif item.merchandise.present? %>
+              <%= item.merchandise.merch_name %>
+            <% else %>
+              Product Not Found
+            <% end %>
+          </td>
+          <td><%= item.quantity %></td>
+          <td><%= number_to_currency(item.price_at_order) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No items in this order.</p>
+<% end %>
+
+<%= link_to 'Back to Order History', order_history_customer_path  %>

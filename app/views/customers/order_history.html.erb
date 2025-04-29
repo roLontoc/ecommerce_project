@@ -1,0 +1,28 @@
+<h1>Your Order History</h1>
+
+<% if @orders.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Order Number</th>
+        <th>Order Date</th>
+        <th>Total</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr>
+          <td><%= order.order_number %></td>
+          <td><%= order.order_date%></td>
+          <td><%= number_to_currency(order.order_total) %></td>
+          <td><%= order.status.capitalize %></td>
+          <td><%= link_to 'View Details', order_path(order) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>You haven't placed any orders yet.</p>
+<% end %>

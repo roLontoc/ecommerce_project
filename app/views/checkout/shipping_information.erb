@@ -1,0 +1,114 @@
+
+<%= form_with(model: @customer, url: checkout_update_address_path, method: :post, local: true, data: { turbo: false } ) do |form| %>
+  <div>
+    <%= form.fields_for :address do |af| %>
+      <div>
+        <%= af.label :street, "Street Address" %>
+        <%= af.text_field :street %>
+      </div>
+
+      <div>
+        <%= af.label :city, "City" %>
+        <%= af.text_field :city %>
+      </div>
+
+      <div>
+        <%= af.label :province_id, "Province" %>
+        <%= af.select :province_id, Province.all.collect { |p| [p.name, p.id] }, { prompt: "Select a Province" }, { id: 'province_select' } %>
+      </div>
+
+      <div>
+        <%= af.label :postal_code, "Postal Code" %>
+        <%= af.text_field :postal_code %>
+      </div>
+    <% end %>
+  </div>
+<%= form.submit "Update Address" %>
+<% end %>
+<%# Your Stripe payment form would be separate %>
+<%= form_with(url: checkout_payment_path, method: :post, id: 'stripe-form') do |form| %>
+  <div id="payment-element">
+    </div>
+  <%= form.submit "Proceed to Payment" %>
+<% end %>
+
+<hr>
+
+<h2>Invoice Summary</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Type</th>
+      <th>Quantity</th>
+      <th>Price</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @cart_items.each do |item| %>
+      <tr>
+        <td><%= item[:product].try(:title) || item[:product].try(:merch_name) %></td>
+        <td><%= item[:product_type] %></td>
+        <td><%= item[:quantity] %></td>
+        <td>$<%= '%.2f' % item[:product].price %></td>
+        <td>$<%= '%.2f' % (item[:product].price * item[:quantity]) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<p id="subtotal"><strong>Subtotal:</strong> $<%= '%.2f' % @subtotal %></p>
+<p id ="tax"><strong>Tax:</strong> $<%= '%.2f' % @tax %></p>
+<p id="total"><strong>Total:</strong> $<%= '%.2f' % @total %></p>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const provinceSelect = document.getElementById('province_select');
+    const subtotalText = document.getElementById("subtotal").innerText;
+    const subtotal = parseFloat(subtotalText.replace(/[^0-9.-]+/g, ""));
+    console.log("Subtotal:", subtotal);
+    const taxElement = document.getElementById('tax');
+    console.log("Tax:", taxElement);
+    const totalElement = document.getElementById('total');
+    console.log("Total:", totalElement);
+
+    provinceSelect.addEventListener('change', function () {
+      const provinceId = provinceSelect.value;
+
+      if (!provinceId) {
+        // If no province is selected, reset tax and total
+        taxElement.innerHTML = "Tax: $0.00";
+        totalElement.innerHTML = `Total: $${subtotal.toFixed(2)}`;
+        return;
+      }
+
+      // Make an AJAX request to get the tax rates for the selected province
+      fetch(`/provinces/${provinceId}/tax_rates`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+           const gstRate = parseFloat(data.gst_rate) || 0;
+           const pstRate = parseFloat(data.pst_rate) || 0;
+           const hstRate = parseFloat(data.hst_rate) || 0;
+            const totalTaxRate = gstRate + pstRate + hstRate;
+            console.log('total tax Rate:', totalTaxRate);
+
+            const tax = subtotal * totalTaxRate;
+            console.log('tax:', subtotal * totalTaxRate);
+
+            // Update the tax and total
+            taxElement.innerHTML = `Tax: $${tax.toFixed(2)}`;
+            const total = subtotal + tax;
+            totalElement.innerHTML = `Total: $${total.toFixed(2)}`;
+          } else {
+            alert('Error retrieving tax rates');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching tax rates:', error);
+          alert('There was an issue fetching the tax rates.');
+        });
+    });
+  });
+</script>

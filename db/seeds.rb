@@ -3,13 +3,14 @@ require 'uri'
 require 'faker'
 require "csv"
 
-AdminUser.where(email: 'admin@example.com').destroy_all if Rails.env.development?
-
 OrderItem.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'order_items'")
 
 Order.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'orders'")
+
+Address.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'addresses'")
 
 Customer.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'customers'")
@@ -31,6 +32,9 @@ ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 
 
 Author.delete_all
 ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'authors'")
+
+Province.delete_all
+ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name = 'provinces'")
 
 def search_author(query)
   encoded_query = URI.encode_www_form_component(query)
@@ -134,16 +138,21 @@ end
 
 puts "Books, Authors, and Genres populated."
 
-puts "Creating Customers..."
-20.times do
-  Customer.create!(
-    first_name: Faker::Name.first_name,
-    last_name: Faker::Name.last_name,
-    email: Faker::Internet.email,
-    address: Faker::Address.full_address
-  )
-end
-puts "Customers created."
+AdminUser.create!(email: 'admin@example.com', password: 'password', password_confirmation: 'password') if Rails.env.development?
+
+Province.create(name: "Alberta", pst_rate: 0.0, gst_rate: 0.05, hst_rate: 0.0)
+Province.create(name: "British Columbia", pst_rate: 0.07, gst_rate: 0.05, hst_rate: 0.0)
+Province.create(name: "Manitoba", pst_rate: 0.07, gst_rate: 0.05, hst_rate: 0.0)
+Province.create(name: "New Brunswick", pst_rate: 0.0, gst_rate: 0.0, hst_rate: 0.15)
+Province.create(name: "Newfoundland and Labrador", pst_rate: 0.0, gst_rate: 0.0, hst_rate: 0.15)
+Province.create(name: "Nova Scotia", pst_rate: 0.0, gst_rate: 0.0, hst_rate: 0.15)
+Province.create(name: "Ontario", pst_rate: 0.0, gst_rate: 0.0, hst_rate: 0.13)
+Province.create(name: "Prince Edward Island", pst_rate: 0.0, gst_rate: 0.0, hst_rate: 0.15)
+Province.create(name: "Quebec", pst_rate: 0.09975, gst_rate: 0.05, hst_rate: 0.0)
+Province.create(name: "Saskatchewan", pst_rate: 0.06, gst_rate: 0.05, hst_rate: 0.0)
+Province.create(name: "Northwest Territories", pst_rate: 0.0, gst_rate: 0.05, hst_rate: 0.0)
+Province.create(name: "Nunavut", pst_rate: 0.0, gst_rate: 0.05, hst_rate: 0.0)
+Province.create(name: "Yukon", pst_rate: 0.0, gst_rate: 0.05, hst_rate: 0.0)
 
 merchandiseCategoryFile = Rails.root.join('db/merchandise_category.csv')
 
@@ -190,6 +199,17 @@ end
 
 generate_fake_merch(50)
 puts "Merchandise populated!"
+
+
+puts "Creating Customers..."
+20.times do
+  Customer.create!(
+    first_name: Faker::Name.first_name,
+    last_name: Faker::Name.last_name,
+    email: Faker::Internet.email
+  )
+end
+puts "Customers created."
 
   # Create Orders
   puts "Creating Orders..."
@@ -246,4 +266,3 @@ puts "Merchandise populated!"
   end
 end
 puts "Orders created."
-AdminUser.create!(email: 'admin@example.com', password: 'password', password_confirmation: 'password') if Rails.env.development?

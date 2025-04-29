@@ -51,7 +51,7 @@ class ProductsController < ApplicationController
   def add_to_cart
     product_id = params[:product_id]
     product_type = params[:product_type] # Will be 'book' or 'merchandise'
-    quantity = params[:quantity].to_i || 1
+    quantity = (params[:quantity].presence || 1).to_i
 
     session[:cart] ||= {}
     session[:cart][product_key(product_id, product_type)] ||= 0
@@ -96,7 +96,6 @@ class ProductsController < ApplicationController
       redirect_to show_cart_products_path, alert: "Item not found in cart."
     end
   end
-
   private
 
   def product_key(product_id, product_type)

@@ -40,5 +40,5 @@
   <p><strong>Subtotal: <%= number_to_currency(@cart_items.sum { |item| item[:product].price * item[:quantity] }) %></strong></p>
 
   <%= link_to "Continue Shopping", products_path %>
-  <%= link_to "Proceed to Checkout (Stripe)", checkout_create_path, method: :post %>
+  <%= link_to "Proceed to Checkout", checkout_shipping_information_path %>
 <% end %>

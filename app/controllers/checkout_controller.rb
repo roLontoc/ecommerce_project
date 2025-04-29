@@ -1,118 +1,230 @@
 class CheckoutController < ApplicationController
-  before_action :find_cart_items, only: [ :checkout, :create, :success ]
-  def checkout
-    if @cart_items.empty?
-      redirect_to show_cart_products_path, alert: "Your cart is empty. Cannot proceed to checkout."
-      nil
+  before_action :authenticate_customer!
+
+  # Displays the shipping information form and cart details
+  def shipping_information
+    @customer = current_customer
+    @customer.build_address if @customer.address.nil?
+    @cart_items = get_cart_items
+    @provinces = Province.all
+
+    @subtotal = calculate_subtotal(@cart_items)
+
+    if @customer.address&.province_id
+      @province = Province.find(@customer.address.province_id)
+    else
+      @province = nil
     end
 
-    if customer_signed_in?
-      @customer = current_customer
-      @address = current_customer.address.present? ? current_customer.address : Address.new
+    @tax = calculate_tax_amount(@subtotal, @province)
+    @total = @subtotal + @tax
+  end
+
+  def update_address
+    @customer = current_customer
+
+    if @customer.address.nil?
+      @customer.build_address(customer_params[:address_attributes])
     else
-      @address = Address.new
-      @customer = nil
+      @customer.address.update(customer_params[:address_attributes])
+    end
+
+    if @customer.save
+      flash[:notice] = "Address updated successfully!"
+      redirect_to checkout_shipping_information_path
+    else
+      flash[:alert] = "Failed to update address."
+      redirect_to checkout_shipping_information_path
     end
   end
   def create
-    if @cart_items.empty?
-      redirect_to show_cart_products_path, alert: "Your cart is empty. Cannot proceed."
-      nil
+    # Processes the shipping information update
+    @customer = current_customer
+
+    # If the customer does not have an address, build one
+    if @customer.address.nil?
+      @customer.build_address(customer_params[:address_attributes])
+    else
+      @customer.address.update(customer_params[:address_attributes])
     end
 
-    if customer_signed_in?
-      @customer = current_customer
-      if current_customer.address.present?
-        @address = current_customer.address
+    # Ensure the customer_id is set for the address
+    if @customer.address.present?
+      @customer.address.customer_id = @customer.id
+    end
+
+    # Now attempt to save the customer with the address
+    if @customer.save
+      flash[:notice] = "Shipping information updated successfully!"
+
+      # Calculate the cart items and total
+      @cart_items = get_cart_items
+      @subtotal = calculate_subtotal(@cart_items)
+
+      # Find the province based on the selected province_id
+      if @customer.address.province_id
+        @province = Province.find(@customer.address.province_id)
       else
-        @address = Address.new(address_params)
-        unless @address.save
-          flash.now[:alert] = "Please provide a valid address."
-          render :checkout and return
-        end
-        current_customer.update(address: @address)
-        current_customer.update(province: @address.province) # Set customer's province
+        @province = nil
       end
-    else
-      @address = Address.new(address_params)
-      unless @address.save
-        flash.now[:alert] = "Please provide a valid address."
-        render :checkout and return
-      end
-      @customer = nil
-    end
-    total_amount = calculate_total_with_taxes(@cart_items, @address.province)
-    @order = Order.new(customer: @customer, total_amount: total_amount)
 
-    if @order.save
-      @cart_items.each do |item|
-        OrderItem.create(
-          order: @order,
-          product: item[:product],
-          quantity: item[:quantity],
-          price: item[:product].price
-        )
-      end
-      stripe_session = Stripe::Checkout::Session.create(
+      # Calculate the tax and total based on the province
+      @tax = calculate_tax_amount(@subtotal, @province)
+      @total = @subtotal + @tax
+
+      # Redirect to the payment page or proceed to the next step
+      redirect_to checkout_payment_path
+    else
+      flash[:alert] = "There was an error updating your shipping information."
+      render :shipping_information
+    end
+  end
+  # Displays the payment processing page
+  def payment
+    @cart_items = get_cart_items
+    if @cart_items.empty?
+      flash[:alert] = "Your cart is empty."
+      redirect_to products_path
+      return
+    end
+
+    @customer = current_customer
+    @customer.reload # Crucial: Get the latest address from the database
+    @province = Province.find_by(id: @customer.address&.province_id)
+
+    # province_id = params.dig(:customer, :address_attributes, :province_id)
+    # province = Province.find_by(id: province_id)
+
+    subtotal_amount = calculate_subtotal(@cart_items)
+    tax_amount = calculate_tax_amount(subtotal_amount, @province)
+    @total_amount = subtotal_amount + tax_amount
+
+    tax_rate = 0.0
+   if @province
+     tax_rate = (@province.gst_rate || 0.0) + (@province.pst_rate || 0.0) + (@province.hst_rate || 0.0)
+   else
+     tax_rate = 0.05 # Default GST
+   end
+
+   line_items = create_line_items(@cart_items, @total_amount, tax_rate)
+
+    if @session.nil?
+      @session = Stripe::Checkout::Session.create(
         payment_method_types: [ "card" ],
-        mode: "payment",
-        success_url: checkout_success_url(order_number: @order.order_number),
+        success_url: checkout_success_url + "?session_id={CHECKOUT_SESSION_ID}",
         cancel_url: checkout_cancel_url,
-        line_items: @cart_items.map do |item|
-          {
-            price_data: {
-              currency: "cad",
-              unit_amount: (item[:product].price * 100).to_i,
-              product_data: {
-                name: item[:product].respond_to?(:title) ? item[:product].title : item[:product].name,
-                description: item[:product].respond_to?(:description) ? item[:product].description : item[:product].details
-              }
-            },
-            quantity: item[:quantity]
-          }
-        end
+        mode: "payment",
+        line_items: line_items,
+        metadata: {
+          user_id: current_customer.id,
+          total_amount: @total_amount,
+          subtotal_amount: subtotal_amount,
+          tax_amount: tax_amount
+        }
       )
-      session[:order_number] = @order.order_number
-      session[:cart] = {}
-      redirect_to stripe_session.url, allow_other_host: true
-    else
-      flash.now[:alert] = "There was an error processing your order."
-      render :checkout
+      session[:stripe_checkout_session_id] = @session.id
     end
+
+    redirect_to @session.url, allow_other_host: true
   end
+  # Handles successful payment
   def success
-    @order = Order.find_by(order_number: params[:order_number])
-    if customer_signed_in?
-      current_customer.associate_cart_with_customer(session[:cart]) if session[:cart]
-      session[:cart] = {}
+    session = Stripe::Checkout::Session.retrieve(params[:session_id])
+    order = Order.create!(
+      customer_id: current_customer.id,
+      order_total: session.metadata.total_amount.to_f,
+      order_tax: session.metadata.tax_amount.to_f,
+      order_number: params[:session_id],
+      status: "paid",
+      order_date: Date.today
+    )
+
+    # create order items
+    cart_items = get_cart_items
+    cart_items.each do |item|
+      book = nil
+      merchandise = nil
+
+      if item[:product].is_a?(Book)
+        book = item[:product]
+      elsif item[:product].is_a?(Merchandise)
+        merchandise = item[:product]
+      end
+
+      if book.nil? && merchandise.nil?
+        flash[:alert] = "Product not found for cart item."
+        redirect_to checkout_shipping_information_path
+        return
+      end
+      OrderItem.create!(
+        order_id: order.id,
+        book_id: book&.id,          # Set book_id if it's a book
+        merchandise_id: merchandise&.id,  # Set merchandise_id if it's merchandise
+        quantity: item[:quantity],
+        price_at_order: item[:product].price,
+      )
     end
-    flash[:notice] = "Payment successful! Thank you for your order."
-    redirect_to order_path(@order) if defined? order_path
-    redirect_to root_path
+
+    clear_cart # clear cart
+    session[:stripe_checkout_session_id] = nil # Clear Stripe session ID
+    flash[:notice] = "Payment was successful. Thank you for your order!"
+    redirect_to products_path # Or order confirmation page
   end
 
+  # Handles canceled payment
   def cancel
-    flash[:alert] = "Payment was cancelled."
+    flash[:alert] = "Payment was canceled."
     redirect_to show_cart_products_path
   end
 
   private
 
-  def address_params
-    params.require(:address).permit(:street, :city, :province_id, :postal_code) # province_id
+
+  def customer_params
+    params.require(:customer).permit(
+      :customer_id,
+      :first_name,
+      :last_name,
+      address_attributes: [ :street, :city, :province_id, :postal_code ]
+    )
   end
 
-  def find_cart_items
-    @cart_items = []
+  # Calculate subtotal
+  def calculate_subtotal(cart_items)
+    cart_items.sum { |item| item[:product].price * item[:quantity] }
+  end
+
+  # calculate tax amount
+  def calculate_tax_amount(subtotal, province)
+    if province
+      gst_rate = province.gst_rate || 0.0
+      pst_rate = province.pst_rate || 0.0
+      hst_rate = province.hst_rate || 0.0
+    else
+      gst_rate = 0.05 # Default GST if province not found
+      pst_rate = 0.0
+      hst_rate = 0.0
+    end
+    tax_rate = gst_rate + pst_rate + hst_rate
+    subtotal * tax_rate
+  end
+
+  def get_cart_items
+    cart_items = []
     if session[:cart]
       session[:cart].each do |key, quantity|
-        product_id, product_type = split_product_key(key)
+        product_type, product_id = split_product_key(key)
         product = find_product(product_id, product_type)
         if product
-          @cart_items << { product: product, quantity: quantity, product_type: product_type }
+          cart_items << { product: product, quantity: quantity, product_type: product_type.capitalize }
         end
       end
     end
+    cart_items
+  end
+
+  def clear_cart
+    session[:cart] = nil
   end
 
   def split_product_key(key)
@@ -130,21 +242,24 @@ class CheckoutController < ApplicationController
     end
   end
 
-  def calculate_total_with_taxes(cart_items, province)
-    subtotal = cart_items.sum { |item| item[:product].price * item[:quantity] }
-    pst_rate, gst_rate, hst_rate = get_tax_rates(province)
-    pst = subtotal * pst_rate
-    gst = subtotal * gst_rate
-    hst = subtotal * hst_rate
-    subtotal + pst + gst + hst
-  end
+  # This method is no longer directly used for updating the Address
+  # def customer_params
+  #   params.require(:customer).permit(:address, :city, :province, :postal_code)
+  # end
 
-  def get_tax_rates(province)
-    if province.is_a?(Province)
-      [ province.pst_rate, province.gst_rate, province.hst_rate ]
-    else
-      province_record = Province.find(province)
-      [ province_record.pst_rate, province_record.gst_rate, province_record.hst_rate ]
+  def create_line_items(cart_items, total_amount, tax_rate)
+    line_items = cart_items.map do |item|
+      {
+        price_data: {
+          currency: "cad",
+          product_data: {
+            name: item[:product].respond_to?(:title) ? item[:product].title : item[:product].merch_name
+
+          },
+          unit_amount: (item[:product].price * 100 * (tax_rate + 1)).to_i # Price in cents
+        },
+        quantity: item[:quantity]
+      }
     end
   end
 end

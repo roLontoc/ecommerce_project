@@ -1,6 +1,6 @@
 <h2>Sign up</h2>
 
-<%= form_for(Customer.new, url: customer_registration_path) do |f| %>
+<%= form_for(@customer || Customer.new.build_address, url: customer_registration_path) do |f| %>
   <%= render "devise/shared/error_messages", resource: resource %>
 
  <div class="field">
@@ -14,14 +14,31 @@
   </div>
 
   <div class="field">
-    <%= f.label :address %><br />
-    <%= f.text_area :address %>
-  </div>
-
-  <div class="field">
     <%= f.label :email %><br />
     <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
   </div>
+
+ <fieldset>
+    <legend>Shipping Address</legend>
+    <%= f.fields_for :address, Address.new do |address_form| %>
+      <div class="field">
+        <%= address_form.label :street, "Street Address" %><br />
+        <%= address_form.text_field :street %>
+      </div>
+      <div class="field">
+        <%= address_form.label :city %><br />
+        <%= address_form.text_field :city %>
+      </div>
+      <div class="field">
+        <%= address_form.label :province_id, "Province" %><br />
+        <%= address_form.collection_select :province_id, Province.all, :id, :name, prompt: "Select Province" %>
+      </div>
+      <div class="field">
+        <%= address_form.label :postal_code %><br />
+        <%= address_form.text_field :postal_code %>
+      </div>
+    <% end %>
+  </fieldset>
 
   <div class="field">
     <%= f.label :password %>
@@ -35,6 +52,8 @@
     <%= f.label :password_confirmation %><br />
     <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
   </div>
+
+
 
   <div class="actions">
     <%= f.submit "Sign up" %>

@@ -2,6 +2,8 @@ class Merchandise < ApplicationRecord
   belongs_to :merchandise_category
   has_one_attached :image
 
+  validates :price, numericality: true
+  validates :stock_quantity, numericality: { only_integer: true }
 
   def self.ransackable_associations(auth_object = nil)
     [ "merchandise_category" ]
